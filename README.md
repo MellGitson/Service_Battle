@@ -16,18 +16,41 @@
 
 ```text
 .
-├── .github/workflows/        # Pipeline CI/CD de déploiement automatique
+├── .github/workflows/         # Pipeline CI/CD de déploiement automatique (deploy.yml)
 ├── services/
-│   ├── front/                # Code source + Dockerfile du Front
-│   ├── api/                  # Code source + Dockerfile de l'API métier
+│   ├── front/                 # Code source + Dockerfile du Front
+│   ├── api/                   # Code source + Dockerfile de l'API métier
 │   └── annexe/                # Code source + Dockerfile du Service annexe
-├── infra/                    # Machine cible vm-prod (maquette Docker-in-Docker + SSH)
-├── k8s/                      # Manifestes Kubernetes (palier optionnel)
+├── infra/                     # Machine cible vm-prod (maquette Docker-in-Docker + SSH)
+├── grafana/provisioning/      # Datasource Prometheus + dashboard auto-provisionnés
 ├── docs/
-│   ├── RUNBOOK_FLOTTE.md     # Procédure de redéploiement et de résolution des pannes
-│   └── CARNET_FLOTTE.md      # Relevés chiffrés et métriques
-├── docker-compose.prod.yml   # Fichier de déploiement Compose
-├── grafana-dashboard.json    # Export du tableau de bord Grafana (4 panneaux)
-├── pannes.sh                 # Script de simulation des 6 pannes
-└── .env.example              # Exemple de variables d'environnement (sans secrets)
+│   ├── RUNBOOK_FLOTTE.md      # Diagnostic des pannes + procédure de reconstruction
+│   └── CARNET_FLOTTE.md       # Relevés chiffrés et métriques
+├── docker-compose.prod.yml    # Fichier de déploiement Compose (services + Prometheus + Grafana)
+├── prometheus.yml             # Configuration de scraping Prometheus
+├── grafana-dashboard.json     # Export du tableau de bord Grafana (4 panneaux)
+├── pannes.sh                  # Script de simulation des 6 pannes
+└── .env.example               # Exemple de variables d'environnement (sans secrets)
 ```
+
+
+## Démarrage rapide
+
+**Déploiement automatique :** tout push sur `main` déclenche `.github/workflows/deploy.yml`, qui build les 3 images, les déploie sur `vm-prod` et vérifie leur santé (échec si un service ne répond pas sous 30s).
+
+**Déploiement manuel** (depuis `vm-prod` ou toute machine avec Docker Compose) :
+
+```bash
+cp .env.example .env   # puis remplir les variables
+docker compose -f docker-compose.prod.yml up -d
+```
+
+**Accès aux services une fois déployés :**
+
+| Service | Port | Usage |
+| :--- | :---: | :--- |
+| Front | 3000 | Interface web (pavillon, statut) |
+| Grafana | 3001 | Dashboard "Flotte Solo-Corsair" (identifiants : `admin` / `GRAFANA_ADMIN_PASSWORD`) |
+| Prometheus | 9090 | Requêtes PromQL, cibles scrapées |
+
+**Simuler une panne :** `./pannes.sh <1-6>` (voir [docs/RUNBOOK_FLOTTE.md](docs/RUNBOOK_FLOTTE.md) pour le diagnostic de chacune).
