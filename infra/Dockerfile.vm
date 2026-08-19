@@ -3,7 +3,7 @@
 # capable de recevoir "docker compose pull && docker compose up -d" depuis la pipeline.
 FROM docker:27-dind
 
-RUN apk add --no-cache openssh-server bash
+RUN apk update && apk upgrade --no-cache && apk add --no-cache openssh-server bash
 
 RUN ssh-keygen -A \
     && mkdir -p /root/.ssh \
