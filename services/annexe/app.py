@@ -13,6 +13,15 @@ def travail():
     return {"status": "ok"}
 
 
+@app.post("/pavillon")
+def hisser_pavillon():
+    texte = request.get_data(as_text=True)
+    os.makedirs(os.path.dirname(PAVILLON_FICHIER), exist_ok=True)
+    with open(PAVILLON_FICHIER, "w") as f:
+        f.write(texte)
+    return {"status": "ok"}
+
+
 @app.get("/sante")
 def sante():
     return {"status": "ok"}, 200
