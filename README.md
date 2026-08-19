@@ -32,15 +32,3 @@
 └── .env.example              # Exemple de variables d'environnement (sans secrets)
 ```
 
-## Avancement (paliers)
-
-- [x] Palier 1 — Étape 1 : initialisation du dépôt et machine cible `vm-prod`
-- [ ] Palier 1 — Étape 2 : intégration du pouls et premier service
-- [ ] Palier 2 — Flotte au complet & CI/CD
-- [ ] Palier 3 — Persistance et robustesse des sondes
-- [ ] Palier 4 — Charge, scalabilité et relevés chiffrés
-- [ ] Palier 5 — Simulation des 6 pannes et runbook
-- [ ] Palier 6 — Observabilité (Prometheus & Grafana)
-- [ ] Palier 7 — Déploiement cluster (optionnel)
-
-Voir [DIRECTIVES_PROJET_SERVICES_BATTLE.md](DIRECTIVES_PROJET_SERVICES_BATTLE.md) pour le détail des directives suivies.
