@@ -94,6 +94,20 @@ services:
       timeout: 3s
       retries: 3
 
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    depends_on:
+      - front
+      - api
+      - annexe
+
 volumes:
   pavillon:
   db-data:
+  prometheus-data:

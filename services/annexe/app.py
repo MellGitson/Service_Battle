@@ -1,9 +1,14 @@
 import os
 from flask import Flask, request
+from prometheus_flask_exporter import PrometheusMetrics
 
 from pouls import demarrerLePouls
 
 app = Flask(__name__)
+metrics = PrometheusMetrics(app)
+
+VERSION = os.environ.get("VERSION", "dev")
+metrics.info("service_version", "Version déployée du service", version=VERSION)
 
 PAVILLON_FICHIER = os.environ.get("PAVILLON_FICHIER", "/data/pavillon.txt")
 

@@ -1,10 +1,17 @@
 import os
 import psycopg2
 from flask import Flask, request
+from prometheus_flask_exporter import PrometheusMetrics
+from prometheus_client import Gauge
 
 from pouls import demarrerLePouls
 
 app = Flask(__name__)
+metrics = PrometheusMetrics(app)
+
+VERSION = os.environ.get("VERSION", "dev")
+metrics.info("service_version", "Version déployée du service", version=VERSION)
+sante_bdd_gauge = Gauge("sante_bdd", "Connexion à la base de données (1 = ok, 0 = ko)")
 
 PAVILLON_FICHIER = os.environ.get("PAVILLON_FICHIER", "/data/pavillon.txt")
 
@@ -57,7 +64,9 @@ def sante():
         conn = _connexion_bdd()
         conn.close()
     except Exception:
+        sante_bdd_gauge.set(0)
         return {"status": "ko", "raison": "connexion base de données indisponible"}, 503
+    sante_bdd_gauge.set(1)
     return {"status": "ok"}, 200
 
 
