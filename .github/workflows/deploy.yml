@@ -1,0 +1,72 @@
+name: Déploiement flotte
+
+on:
+  push:
+    branches: [main]
+
+env:
+  REGISTRY: local
+  TAG: ${{ github.sha }}
+
+jobs:
+  build-and-deploy:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build des images taguées avec le SHA
+        run: |
+          docker build -t ${REGISTRY}/sb-front:${TAG} services/front
+          docker build -t ${REGISTRY}/sb-api:${TAG} services/api
+          docker build -t ${REGISTRY}/sb-annexe:${TAG} services/annexe
+
+      - name: Préparation de la clé SSH de déploiement
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p ${{ secrets.VM_PORT }} ${{ secrets.VM_HOST }} > ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Transfert des images vers vm-prod (sans registry externe)
+        run: |
+          docker save ${REGISTRY}/sb-front:${TAG} ${REGISTRY}/sb-api:${TAG} ${REGISTRY}/sb-annexe:${TAG} \
+            | ssh -i ~/.ssh/deploy_key -p ${{ secrets.VM_PORT }} root@${{ secrets.VM_HOST }} 'docker load'
+
+      - name: Transfert du docker-compose.prod.yml sur vm-prod
+        run: |
+          ssh -i ~/.ssh/deploy_key -p ${{ secrets.VM_PORT }} root@${{ secrets.VM_HOST }} 'mkdir -p /srv/flotte'
+          scp -i ~/.ssh/deploy_key -P ${{ secrets.VM_PORT }} docker-compose.prod.yml root@${{ secrets.VM_HOST }}:/srv/flotte/docker-compose.prod.yml
+
+      - name: Déploiement sur vm-prod
+        run: |
+          ssh -i ~/.ssh/deploy_key -p ${{ secrets.VM_PORT }} root@${{ secrets.VM_HOST }} "
+            cd /srv/flotte &&
+            REGISTRY=${REGISTRY} TAG=${TAG} \
+            GROUPE='${{ vars.GROUPE }}' COULEUR='${{ vars.COULEUR }}' \
+            TABLEAU_URL='${{ vars.TABLEAU_URL }}' \
+            DB_NAME='${{ vars.DB_NAME }}' DB_USER='${{ vars.DB_USER }}' \
+            DB_PASSWORD='${{ secrets.DB_PASSWORD }}' \
+            PAVILLON_FICHIER='${{ vars.PAVILLON_FICHIER }}' \
+            docker compose -f docker-compose.prod.yml up -d
+          "
+
+      - name: Vérification healthcheck (30s max par service)
+        run: |
+          set -e
+          for service in front api annexe; do
+            echo "Vérification de $service..."
+            ready=false
+            for i in $(seq 1 30); do
+              if ssh -i ~/.ssh/deploy_key -p ${{ secrets.VM_PORT }} root@${{ secrets.VM_HOST }} \
+                   "docker compose -f /srv/flotte/docker-compose.prod.yml exec -T $service python -c \"import urllib.request; exit(0 if urllib.request.urlopen('http://localhost:5000/sante').status == 200 else 1)\"" > /dev/null 2>&1; then
+                ready=true
+                break
+              fi
+              sleep 1
+            done
+            if [ "$ready" != "true" ]; then
+              echo "::error::Le service $service ne répond pas au bout de 30s"
+              exit 1
+            fi
+          done
