@@ -1,0 +1,15 @@
+global:
+  scrape_interval: 10s
+
+scrape_configs:
+  - job_name: front
+    static_configs:
+      - targets: ["front:5000"]
+
+  - job_name: api
+    static_configs:
+      - targets: ["api:5000"]
+
+  - job_name: annexe
+    static_configs:
+      - targets: ["annexe:5000"]

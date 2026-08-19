@@ -2,10 +2,15 @@ import os
 import urllib.request
 import urllib.error
 from flask import Flask, render_template, request
+from prometheus_flask_exporter import PrometheusMetrics
 
 from pouls import demarrerLePouls
 
 app = Flask(__name__)
+metrics = PrometheusMetrics(app)
+
+VERSION = os.environ.get("VERSION", "dev")
+metrics.info("service_version", "Version déployée du service", version=VERSION)
 
 PAVILLON_FICHIER = os.environ.get("PAVILLON_FICHIER", "/data/pavillon.txt")
 URL_API = os.environ.get("URL_API", "http://api:5000")
