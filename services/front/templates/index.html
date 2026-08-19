@@ -8,5 +8,10 @@
   <h1>Solo-Corsair</h1>
   <p>Équipage : {{ groupe }}</p>
   <p>Pavillon : {{ pavillon }}</p>
+  {% if api_disponible %}
+  <p>Données API : disponibles</p>
+  {% else %}
+  <p>Données indisponibles</p>
+  {% endif %}
 </body>
 </html>

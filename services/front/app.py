@@ -1,4 +1,6 @@
 import os
+import urllib.request
+import urllib.error
 from flask import Flask, render_template, request
 
 from pouls import demarrerLePouls
@@ -6,6 +8,15 @@ from pouls import demarrerLePouls
 app = Flask(__name__)
 
 PAVILLON_FICHIER = os.environ.get("PAVILLON_FICHIER", "/data/pavillon.txt")
+URL_API = os.environ.get("URL_API", "http://api:5000")
+
+
+def _donnees_api():
+    try:
+        with urllib.request.urlopen(f"{URL_API}/travail", timeout=3) as reponse:
+            return reponse.status == 200
+    except (urllib.error.URLError, TimeoutError):
+        return None
 
 
 @app.get("/")
@@ -14,7 +25,13 @@ def index():
     if os.path.exists(PAVILLON_FICHIER):
         with open(PAVILLON_FICHIER) as f:
             pavillon = f.read()
-    return render_template("index.html", groupe=os.environ.get("GROUPE", ""), pavillon=pavillon)
+    api_disponible = _donnees_api()
+    return render_template(
+        "index.html",
+        groupe=os.environ.get("GROUPE", ""),
+        pavillon=pavillon,
+        api_disponible=api_disponible,
+    )
 
 
 @app.get("/travail")
