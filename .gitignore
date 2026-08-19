@@ -10,3 +10,5 @@ build/
 .DS_Store
 data/
 infra/deploy_key
+
+/DIRECTIVES_PROJET_SERVICES_BATTLE.md
