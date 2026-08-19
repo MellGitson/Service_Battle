@@ -30,8 +30,14 @@ jobs:
 
       - name: Transfert des images vers vm-prod (sans registry externe)
         run: |
-          docker save ${REGISTRY}/sb-front:${TAG} ${REGISTRY}/sb-api:${TAG} ${REGISTRY}/sb-annexe:${TAG} \
-            | ssh -i ~/.ssh/deploy_key -p ${{ secrets.VM_PORT }} root@${{ secrets.VM_HOST }} 'docker load'
+          set -eo pipefail
+          for service in front api annexe; do
+            echo "Transfert de sb-${service}:${TAG}..."
+            docker save ${REGISTRY}/sb-${service}:${TAG} \
+              | ssh -i ~/.ssh/deploy_key -p ${{ secrets.VM_PORT }} root@${{ secrets.VM_HOST }} 'docker load'
+            ssh -i ~/.ssh/deploy_key -p ${{ secrets.VM_PORT }} root@${{ secrets.VM_HOST }} \
+              "docker image inspect ${REGISTRY}/sb-${service}:${TAG} > /dev/null"
+          done
 
       - name: Transfert du docker-compose.prod.yml sur vm-prod
         run: |
