@@ -31,4 +31,3 @@
 ├── pannes.sh                 # Script de simulation des 6 pannes
 └── .env.example              # Exemple de variables d'environnement (sans secrets)
 ```
-

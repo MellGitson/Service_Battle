@@ -1,0 +1,78 @@
+services:
+  front:
+    image: ${REGISTRY}/sb-front:${TAG}
+    build:
+      context: services/front
+    restart: unless-stopped
+    ports:
+      - "3000:5000"
+    environment:
+      TABLEAU_URL: ${TABLEAU_URL}
+      GROUPE: ${GROUPE}
+      COULEUR: ${COULEUR}
+      SERVICE: front
+      VERSION: ${TAG}
+      PAVILLON_FICHIER: ${PAVILLON_FICHIER}
+      URL_INTERNE: http://front:5000
+    volumes:
+      - pavillon:/data
+    depends_on:
+      - api
+
+  api:
+    image: ${REGISTRY}/sb-api:${TAG}
+    build:
+      context: services/api
+    restart: unless-stopped
+    expose:
+      - "5000"
+    environment:
+      TABLEAU_URL: ${TABLEAU_URL}
+      GROUPE: ${GROUPE}
+      COULEUR: ${COULEUR}
+      SERVICE: api
+      VERSION: ${TAG}
+      PAVILLON_FICHIER: ${PAVILLON_FICHIER}
+      URL_INTERNE: http://api:5000
+      DB_HOST: db
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - pavillon:/data
+    depends_on:
+      - db
+
+  annexe:
+    image: ${REGISTRY}/sb-annexe:${TAG}
+    build:
+      context: services/annexe
+    restart: unless-stopped
+    expose:
+      - "5000"
+    environment:
+      TABLEAU_URL: ${TABLEAU_URL}
+      GROUPE: ${GROUPE}
+      COULEUR: ${COULEUR}
+      SERVICE: annexe
+      VERSION: ${TAG}
+      PAVILLON_FICHIER: ${PAVILLON_FICHIER}
+      URL_INTERNE: http://annexe:5000
+    volumes:
+      - pavillon:/data
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    expose:
+      - "5432"
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+volumes:
+  pavillon:
+  db-data:
