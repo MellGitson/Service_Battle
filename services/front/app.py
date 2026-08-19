@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 
 from pouls import demarrerLePouls
 
@@ -10,11 +10,24 @@ PAVILLON_FICHIER = os.environ.get("PAVILLON_FICHIER", "/data/pavillon.txt")
 
 @app.get("/")
 def index():
-    return render_template("index.html", groupe=os.environ.get("GROUPE", ""))
+    pavillon = ""
+    if os.path.exists(PAVILLON_FICHIER):
+        with open(PAVILLON_FICHIER) as f:
+            pavillon = f.read()
+    return render_template("index.html", groupe=os.environ.get("GROUPE", ""), pavillon=pavillon)
 
 
 @app.get("/travail")
 def travail():
+    return {"status": "ok"}
+
+
+@app.post("/pavillon")
+def hisser_pavillon():
+    texte = request.get_data(as_text=True)
+    os.makedirs(os.path.dirname(PAVILLON_FICHIER), exist_ok=True)
+    with open(PAVILLON_FICHIER, "w") as f:
+        f.write(texte)
     return {"status": "ok"}
 
 

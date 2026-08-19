@@ -1,5 +1,5 @@
 import os
-from flask import Flask
+from flask import Flask, request
 
 from pouls import demarrerLePouls
 
@@ -10,6 +10,15 @@ PAVILLON_FICHIER = os.environ.get("PAVILLON_FICHIER", "/data/pavillon.txt")
 
 @app.get("/travail")
 def travail():
+    return {"status": "ok"}
+
+
+@app.post("/pavillon")
+def hisser_pavillon():
+    texte = request.get_data(as_text=True)
+    os.makedirs(os.path.dirname(PAVILLON_FICHIER), exist_ok=True)
+    with open(PAVILLON_FICHIER, "w") as f:
+        f.write(texte)
     return {"status": "ok"}
 
 
