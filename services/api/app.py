@@ -20,9 +20,26 @@ def _connexion_bdd():
     )
 
 
+def _init_table():
+    with _connexion_bdd() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "CREATE TABLE IF NOT EXISTS coups (id SERIAL PRIMARY KEY, recu_a TIMESTAMPTZ DEFAULT now())"
+            )
+        conn.commit()
+
+
 @app.get("/travail")
 def travail():
-    return {"status": "ok"}
+    somme = sum(i * i for i in range(10000))
+    with _connexion_bdd() as conn:
+        with conn.cursor() as cur:
+            cur.execute("INSERT INTO coups DEFAULT VALUES RETURNING id")
+            coup_id = cur.fetchone()[0]
+            cur.execute("SELECT count(*) FROM coups")
+            total = cur.fetchone()[0]
+        conn.commit()
+    return {"status": "ok", "coup_id": coup_id, "total_coups": total, "somme": somme}
 
 
 @app.post("/pavillon")
@@ -45,5 +62,6 @@ def sante():
 
 
 if __name__ == "__main__":
+    _init_table()
     demarrerLePouls()
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
