@@ -39,10 +39,11 @@ jobs:
               "docker image inspect ${REGISTRY}/sb-${service}:${TAG} > /dev/null"
           done
 
-      - name: Transfert du docker-compose.prod.yml sur vm-prod
+      - name: Transfert des fichiers de déploiement sur vm-prod
         run: |
           ssh -i ~/.ssh/deploy_key -p ${{ secrets.VM_PORT }} root@${{ secrets.VM_HOST }} 'mkdir -p /srv/flotte'
-          scp -i ~/.ssh/deploy_key -P ${{ secrets.VM_PORT }} docker-compose.prod.yml root@${{ secrets.VM_HOST }}:/srv/flotte/docker-compose.prod.yml
+          scp -i ~/.ssh/deploy_key -P ${{ secrets.VM_PORT }} docker-compose.prod.yml prometheus.yml root@${{ secrets.VM_HOST }}:/srv/flotte/
+          scp -i ~/.ssh/deploy_key -P ${{ secrets.VM_PORT }} -r grafana root@${{ secrets.VM_HOST }}:/srv/flotte/
 
       - name: Déploiement sur vm-prod
         run: |
@@ -54,6 +55,7 @@ jobs:
             DB_NAME='${{ vars.DB_NAME }}' DB_USER='${{ vars.DB_USER }}' \
             DB_PASSWORD='${{ secrets.DB_PASSWORD }}' \
             PAVILLON_FICHIER='${{ vars.PAVILLON_FICHIER }}' \
+            GRAFANA_ADMIN_PASSWORD='${{ secrets.GRAFANA_ADMIN_PASSWORD }}' \
             docker compose -f docker-compose.prod.yml up -d
           "
 
